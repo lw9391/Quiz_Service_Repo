@@ -4,7 +4,8 @@ info:
   title: Quiz Service Engine
   description: REST Web Service to store and retrive quizzes.
 servers:
-    - url: localhost:8889/api
+    - url: http://localhost:8889/api
+      description: Localhost for development and testing
 tags:
   - name: Quiz
     description: Access to quizzes
