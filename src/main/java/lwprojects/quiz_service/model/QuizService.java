@@ -2,6 +2,7 @@ package lwprojects.quiz_service.model;
 
 
 import lwprojects.quiz_service.Quiz;
+import lwprojects.quiz_service.QuizResp;
 import lwprojects.quiz_service.security.UserEntity;
 import lwprojects.quiz_service.security.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Component;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -68,12 +72,21 @@ public class QuizService {
                 .map(QuizCompletion::new);
     }
 
-    public void addCompletionsOfQuiz(long id, Principal principal) {
-        String email = principal.getName();
-        QuizEntity quiz = quizRepository.findById(id).get();
-        UserEntity user = userRepository.findByEmail(email).get();
-        LocalDateTime completedAt = LocalDateTime.now();
-        CompletionsEntity quizCompletion = new CompletionsEntity(quiz, user, completedAt);
-        completionsRepository.save(quizCompletion);
+    public QuizResp addCompletionsOfQuiz(long id, List<Integer> answer, Principal principal) {
+        List<Integer> answerChecked = Objects.requireNonNullElseGet(answer, ArrayList::new);
+        Quiz quiz = getQuiz(id).orElseThrow(IndexOutOfBoundsException::new);
+        List<Integer> correctAnswer = quiz.getAnswer();
+        if (correctAnswer.containsAll(answerChecked) && answerChecked.containsAll(correctAnswer)) {
+            String email = principal.getName();
+            QuizEntity quizEntity = quizRepository.findById(id).get();
+            UserEntity user = userRepository.findByEmail(email).get();
+            LocalDateTime completedAt = LocalDateTime.now();
+            CompletionsEntity quizCompletion = new CompletionsEntity(quizEntity, user, completedAt);
+            completionsRepository.save(quizCompletion);
+            return QuizResp.CORRECT;
+        } else {
+            return QuizResp.INCORRECT;
+        }
+
     }
 }

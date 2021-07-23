@@ -55,15 +55,7 @@ public class QuizController {
 
     @PostMapping(path = "/api/quizzes/{id}/solve")
     public QuizResp solveQuiz(@PathVariable long id, @RequestBody AnswerWrapper answerWrapper, Principal principal) {
-        List<Integer> answerChecked = Objects.requireNonNullElseGet(answerWrapper.answer, ArrayList::new);
-        Quiz quiz = getQuiz(id);
-        List<Integer> correctAnswer = quiz.getAnswer();
-        if (correctAnswer.containsAll(answerChecked) && answerChecked.containsAll(correctAnswer)) {
-            quizService.addCompletionsOfQuiz(id, principal);
-            return QuizResp.CORRECT;
-        } else {
-            return QuizResp.INCORRECT;
-        }
+        return quizService.addCompletionsOfQuiz(id, answerWrapper.answer, principal);
     }
 
     @DeleteMapping(path = "/api/quizzes/{id}")
