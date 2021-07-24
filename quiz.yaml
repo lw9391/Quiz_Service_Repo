@@ -1,0 +1,340 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Quiz Service Engine
+  description: REST Web Service to store and retrive quizzes.
+servers:
+    - url: http://localhost:8889/api
+      description: Localhost for development and testing
+tags:
+  - name: Quiz
+    description: Access to quizzes
+paths:
+  /quizzes/:
+    get:
+      tags:
+        - Quiz
+      summary: Get a list of created quizzes.
+      operationId: getListOfQuizzes
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: >-
+            Successfully returned a list of quizzes. Response body contains an
+            array of Quiz Objects (wrapped in a paging object).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/quizzes'
+              example:
+                - id: 1
+                  title: Pokemons or IT tech?
+                  text: 'Select pokemons from list:'
+                  options:
+                    - ditto
+                    - hadoop
+                    - pandas
+                    - gradle
+                    - vulpix
+                    - feebas
+                - id: 2
+                  title: Java logo.
+                  text: What's on java logo?
+                  options:
+                    - bird
+                    - cup
+                    - rainbow
+                    - deer
+    post:
+      tags:
+        - Quiz
+      summary: Create a new quizz.
+      operationId: createQuiz
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/quiz'
+            example:
+              title: Pokemons or IT tech?
+              text: 'Select pokemons from list:'
+              options:
+                - ditto
+                - hadoop
+                - pandas
+                - gradle
+                - vulpix
+                - feebas
+              answer:
+                - 0
+                - 4
+                - 5
+      responses:
+        '200':
+          description: >-
+            Successfully created a new quiz. Response body contains newly
+            created quiz object in the form in which it will be sent on
+            request(without answer, with its id).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/quiz'
+              example:
+                id: 1
+                title: Pokemons or IT tech?
+                text: 'Select pokemons from list:'
+                options:
+                  - ditto
+                  - hadoop
+                  - pandas
+                  - gradle
+                  - vulpix
+                  - feebas
+        '400':
+          $ref: '#/components/responses/400_err'
+  '/quiz/{id}':
+    get:
+      tags:
+        - Quiz
+      summary: Get a quiz by given id.
+      operationId: getQuizById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: >-
+            Successfully returned the requested quiz. Response body contains
+            quiz object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/quiz'
+              example:
+                id: 1
+                title: Pokemons or IT tech?
+                text: 'Select pokemons from list:'
+                options:
+                  - ditto
+                  - hadoop
+                  - pandas
+                  - gradle
+                  - vulpix
+                  - feebas
+        '404':
+          $ref: '#/components/responses/404_err'
+    delete:
+      tags:
+        - Quiz
+      summary: >-
+        Delete a quiz by given id. You can delete only those quizzes that you
+        created.
+      operationId: deleteQuizById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully deleted a quiz.
+        '403':
+          description: 'Access denied, when trying to delete other user quiz.'
+        '404':
+          $ref: '#/components/responses/404_err'
+  '/quizzes/{id}/solve':
+    post:
+      tags:
+        - Quiz
+      summary: Solve a quiz specified by it's id.
+      operationId: solveQuizById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/answer'
+            example:
+              answer:
+                - 0
+                - 2
+      responses:
+        '200':
+          description: 'On succed request, response contains QuizRespo object'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/quizResp'
+              example:
+                success: true
+                feedback: 'Congratulations, you''re right!'
+        '400':
+          description: 'Bad request, when wrong answer object was sent.'
+        '404':
+          $ref: '#/components/responses/404_err'
+  /quizzes/completed:
+    get:
+      tags:
+        - Quiz
+      summary: Get a list of quiz completions.
+      operationId: getListOfCompletions
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: >-
+            Successfully returned a list of completions. Response contains an
+            array of quiz completion objects (wrapped by a paging object.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/completions'
+              example:
+                - id: 1
+                  completedAt: '2021-06-11T11:42:55.690Z'
+                - id: 2
+                  completedAt: '2021-07-14T07:13:41.314Z'
+components:
+  schemas:
+    quiz:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        title:
+          type: string
+        text:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+          minItems: 2
+        answer:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+      required:
+        - title
+        - text
+        - options
+    quizzes:
+      type: array
+      items:
+        type: object
+        properties:
+          quiz_id:
+            type: integer
+            format: int64
+          quiz_description:
+            type: string
+          quiz_options:
+            type: array
+            items:
+              type: string
+    answer:
+      type: object
+      properties:
+        answer:
+          type: array
+          items:
+            type: integer
+    quizResp:
+      type: object
+      properties:
+        success:
+          type: boolean
+        feedback:
+          type: string
+    completions:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int64
+          userEmail:
+            type: string
+            pattern: ''
+            writeOnly: true
+          completedAt:
+            type: string
+            format: date-time
+  responses:
+    404_err:
+      description: Quiz associated with such id doesn't exists
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              status:
+                type: integer
+              error:
+                type: string
+              message:
+                type: string
+              path:
+                type: string
+          example:
+            timestamp: '2021-07-11T12:52:12.257+00:00'
+            status: 404
+            error: Not Found
+            message: Element with such id doesn't exists
+            path: /api/quizzes/1
+    400_err:
+      description: >-
+        Bad request. Either wrong object was sent or object failed validation.
+        Response body contains error object.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              status:
+                type: integer
+              error:
+                type: string
+              path:
+                type: string
+          example:
+            timestamp: '2021-07-13T17:44:58.750+00:00'
+            status: 400
+            error: Bad Request
+            message: Validation failed for object=
+            quiz'. Error count: 1'
+            path: /api/quizzes/
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: BasicAuth
+security:
+  - BasicAuth: []
